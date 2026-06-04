@@ -2,7 +2,7 @@
 
 # React Arven
 
-A lightweight, fully typed React context helper with **stable action references** and **subscribable context**.
+ A lightweight, fully typed React context helper with **stable action references** and **subscribable context**.
 
 ## Installation
 
@@ -139,6 +139,28 @@ function MyApp() {
   )
 }
 ```
+
+### Using `shallow`
+
+If you need to transform data in the state selector, use shallow function to perform comparison on object properties instead of top level object.
+
+```tsx
+import { shallow } from 'react-arven'
+
+function Counter() {
+  const { count, label } = useCounterState(
+    s => ({
+      count: s.count,
+      label: c.label
+    }),
+    shallow
+  )
+
+  ...
+}
+```
+
+This way you'll make sure your component doesn't re-render every time. This functionality is inspired by zustand library.
 
 
 
