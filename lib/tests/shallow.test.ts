@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { shallow } from "../shallow";
+import { shallow } from "../src/shallow";
 
 describe("shallow", () => {
   test("returns true for the same reference", () => {

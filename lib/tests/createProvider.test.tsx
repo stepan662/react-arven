@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { describe, test, expect, vi } from "vitest";
 import { act, render, screen } from "@test-utils";
-import { createProvider } from "../createProvider";
+import { createProvider } from "../src/createProvider";
 
 describe("createProvider", () => {
   test("renders provider and exposes state/actions", () => {

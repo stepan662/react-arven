@@ -1,5 +1,5 @@
 import { describe, test, expect, vi } from "vitest";
-import { createStableActions, ActionMap } from "../useStableActions";
+import { createStableActions, ActionMap } from "../src/useStableActions";
 
 type CounterActions = {
   increment: () => number;

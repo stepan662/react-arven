@@ -18,7 +18,7 @@ export default defineWorkspace([
       alias: [
         {
           find: "@test-utils",
-          replacement: resolve(__dir, "src/__tests__/test-utils-react17.ts"),
+          replacement: resolve(__dir, "tests/test-utils-react17.ts"),
         },
         {
           find: "@testing-library/react",
@@ -46,7 +46,7 @@ export default defineWorkspace([
       alias: [
         {
           find: "@test-utils",
-          replacement: resolve(__dir, "src/__tests__/test-utils-react16.ts"),
+          replacement: resolve(__dir, "tests/test-utils-react16.ts"),
         },
         {
           find: "@testing-library/react",

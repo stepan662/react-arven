@@ -8,8 +8,8 @@
     "noEmit": false,
     "jsx": "react-jsx",
     "paths": {
-      "@test-utils": ["./src/__tests__/test-utils.ts"]
+      "@test-utils": ["./tests/test-utils.ts"]
     }
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "tests/createProvider.test.tsx", "tests/createStableActions.test.ts", "tests/renderPerformance.test.tsx", "tests/shallow.test.ts", "tests/test-utils-react16.ts", "tests/test-utils-react17.ts", "tests/test-utils.ts"]
 }

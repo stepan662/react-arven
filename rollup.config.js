@@ -20,7 +20,7 @@ export default {
       declaration: true,
       declarationDir: path.resolve(__dirname, "lib/dist"),
       rootDir: path.resolve(__dirname, "lib/src"),
-      sourceMap: true,
+      sourceMap: false,
       jsx: "react-jsx",
     }),
     filesize({
@@ -31,24 +31,20 @@ export default {
     {
       file: path.resolve(__dirname, "lib/dist/index.esm.js"),
       format: "esm",
-      sourcemap: true,
     },
     {
       file: path.resolve(__dirname, "lib/dist/index.esm.min.js"),
       format: "esm",
-      sourcemap: true,
       plugins: [terser()],
     },
     {
       file: path.resolve(__dirname, "lib/dist/index.cjs.js"),
       format: "cjs",
-      sourcemap: true,
       exports: "named",
     },
     {
       file: path.resolve(__dirname, "lib/dist/index.cjs.min.js"),
       format: "cjs",
-      sourcemap: true,
       exports: "named",
       plugins: [terser()],
     },
