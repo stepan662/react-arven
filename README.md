@@ -2,4 +2,143 @@
 
 # React Arven
 
-A lightweight React context helper with **stable action references** and **selective re-renders**.
+A lightweight, fully typed React context helper with **stable action references** and **subscribable context**.
+
+## Installation
+
+Install react-arven with npm, yarn or pnpm:
+
+```sh
+npm i react-arven
+```
+
+## Usage
+
+### Create provider
+
+You create a provider component, you can use hooks there as in regular react component. Instead of rendering html, we return object with actions and state properties.
+
+```ts
+import { createProvider } from "react-arven";
+
+const [CounterProvider, useCounterActions, useCounterState] = createProvider(() => {
+  const [count, setCount] = useState(0);
+
+  function increment() {          // No useCallback necessary!
+    setCount(val => val + 1)
+  }
+
+  return {
+    actions: { increment },
+    state: { count },
+  };
+});
+```
+
+1. `actions` - is an object with functions, to modify the state, accessible through `useCounterActions`
+2. `state` - is a subscribable state, which you can access through `useCounterState`
+
+You can name your provider and hooks whatever you like. I recommend convention similar to this one.
+
+Both hooks are typed automatically through type inferrence, if you use TypeScript.
+
+### Use provider in your app
+
+Use the provider component, to provide context to children.
+
+```tsx
+function CounterApp() {
+  return (
+    <CounterProvider>
+      <Counter />
+    </CounterProvider>
+  )
+}
+```
+
+### Use state and actions
+
+Now you can use hooks returned from the `createProvider` to use state and actions.
+
+```tsx
+function Counter() {
+  const count = useCounterState(s => s.count)   // selecting only what is needed
+  const { increment } = useCounterActions()
+  return (
+    <div>
+      <div>Count: {count}</div>
+      <button onClick={increment}>Increment</button>
+    </div>
+  )
+}
+```
+
+### Actions object
+
+This library allows you to avoid `useCallback` hook in the provider. The library creates a static object which follows the structure of your passed `actions`, this object contains stable functions, which will call your actual `action`. So even though you recreate the actions object on every render of the provider, you can safely use any action and your component won't rerender because of that.
+
+WARNING: actions object needs to have the same structure every time and is only intended for providing functions, not data.
+
+### State object
+
+State object is passed to children "as-is", however you are expected to only select what you need through the selector function. Library will only re-render when the returned value differ (based on `Object.is`).
+
+So this way you can have very big state, but still be performant and avoid unnecessary re-renders.
+
+### Early return
+
+If you know your state is not complete while you are waiting for some async data, you can return a fallback component instead of state and actions.
+
+```ts
+import { createProvider } from "react-arven";
+
+const [CounterProvider, useCounterActions, useCounterState] = createProvider(() => {
+  const { data, refetch } = useSomeFetchFunction(....);
+
+  if (!data) {
+    return <LoadingFallback />
+  }
+
+  return {
+    actions: { refetch },
+    state: { data },
+  };
+});
+```
+
+If you return react component from `createProvider` function, library will just render the component without providing context and rendering children.
+
+This way you can make sure your children will never recieve `data` as undefined.
+
+### Provider with props
+
+You can pass props to your provider the same way as to any other react component and then use them in the provider body, you can also pass them through context as well.
+
+```tsx
+
+type Props = {
+  itemId: number
+}
+
+const [ItemDataProvider, ...] = createProvider(({ itemId }: Props) => {
+  const { data, refetch } = useSomeFetchFunction(`/api/item/${itemId}`);
+
+  return {
+    actions: { refetch },
+    state: { data, itemId },
+  };
+});
+
+// Usage:
+
+function MyApp() {
+  return (
+    <ItemDataProvider itemId={42}>
+      <ItemComponent />
+    </ItemDataProvider>
+  )
+}
+```
+
+
+
