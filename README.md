@@ -3,7 +3,7 @@
 # React Arven
 
 [![npm](https://img.shields.io/npm/v/react-arven)](https://www.npmjs.com/package/react-arven)
-[![bundle size](https://img.shields.io/npm/unpacked-size/react-arven)](https://www.npmjs.com/package/react-arven)
+[![Minzipped Size](https://img.shields.io/bundlephobia/minzip/react-arven)](https://www.npmjs.com/package/react-arven)
 [![license](https://img.shields.io/npm/l/react-arven)](https://github.com/stepan662/react-arven/blob/main/LICENSE)
 
 A lightweight, fully typed React context helper with **stable action references** and **subscribable context**.
