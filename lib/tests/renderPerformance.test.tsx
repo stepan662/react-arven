@@ -1,8 +1,8 @@
 import React from "react";
 import { describe, test, expect } from "vitest";
 import { act, render, screen } from "@test-utils";
-import { createProvider } from "../createProvider";
-import { shallow } from "../shallow";
+import { createProvider } from "../src/createProvider";
+import { shallow } from "../src/shallow";
 
 describe("render performance", () => {
   test("no unnecessary re-renders on unrelated state change", () => {
