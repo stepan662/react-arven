@@ -18,7 +18,7 @@ npm i react-arven
 
 You create a provider component, you can use hooks there as in regular react component. Instead of rendering html, we return object with actions and state properties.
 
-```ts
+```tsx
 import { createProvider } from "react-arven";
 
 const [CounterProvider, useCounterActions, useCounterState] = createProvider(() => {
@@ -89,7 +89,7 @@ So this way you can have very big state, but still be performant and avoid unnec
 
 If you know your state is not complete while you are waiting for some async data, you can return a fallback component instead of state and actions.
 
-```ts
+```tsx
 import { createProvider } from "react-arven";
 
 const [CounterProvider, useCounterActions, useCounterState] = createProvider(() => {
