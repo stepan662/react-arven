@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/stepan662/react-arven/compare/v1.2.2...v1.3.0) (2026-06-04)
+
+
+### Features
+
+* new readme and smaller build size ([4db6e9b](https://github.com/stepan662/react-arven/commit/4db6e9b0e6ff2f690124e70d97961b517b4d2aeb))
+
 ## [1.2.2](https://github.com/stepan662/react-arven/compare/v1.2.1...v1.2.2) (2026-04-30)
 
 
