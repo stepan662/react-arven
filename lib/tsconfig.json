@@ -7,6 +7,10 @@
     "rootDir": "./",
     "noEmit": false,
     "jsx": "react-jsx",
+    "sourceMap": false,
+    "declarationMap": false,
+    "inlineSources": false,
+    "inlineSourceMap": false,
     "paths": {
       "@test-utils": ["./tests/test-utils.ts"]
     }
