@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/stepan662/react-arven/compare/v1.3.0...v1.3.1) (2026-06-04)
+
+
+### Bug Fixes
+
+* remove sourcemaps ([5319e3c](https://github.com/stepan662/react-arven/commit/5319e3c61909bca7415ad220a6e86e1714230b1f))
+
 # [1.3.0](https://github.com/stepan662/react-arven/compare/v1.2.2...v1.3.0) (2026-06-04)
 
 
