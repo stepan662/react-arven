@@ -110,6 +110,8 @@ If you return react component from `createProvider` function, library will just 
 
 This way you can make sure your children will never recieve `data` as undefined.
 
+REMINDER: Don't use hooks after early return statement [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks) still apply!
+
 ### Provider with props
 
 You can pass props to your provider the same way as to any other react component and then use them in the provider body, you can also pass them through context as well.
