@@ -16,7 +16,7 @@ npm i react-arven
 
 ### Create provider
 
-You create a provider component, you can use hooks there as in regular react component. Instead of rendering html, we return object with actions and state properties.
+You create a provider component, you can use hooks there as in a regular React component. Instead of rendering HTML, we return an object with actions and state properties.
 
 ```tsx
 import { createProvider } from "react-arven";
@@ -40,7 +40,7 @@ const [CounterProvider, useCounterActions, useCounterState] = createProvider(() 
 
 You can name your provider and hooks whatever you like. I recommend convention similar to this one.
 
-Both hooks are typed automatically through type inferrence, if you use TypeScript.
+Both hooks are typed automatically through type inference, if you use TypeScript.
 
 ### Use provider in your app
 
@@ -75,13 +75,13 @@ function Counter() {
 
 ### Actions object
 
-This library allows you to avoid `useCallback` hook in the provider. The library creates a static object which follows the structure of your passed `actions`, this object contains stable functions, which will call your actual `action`. So even though you recreate the actions object on every render of the provider, you can safely use any action and your component won't rerender because of that.
+This library lets you avoid the `useCallback` hook in the provider. Internally, it creates a stable object that mirrors the structure of your `actions`, where each function delegates to your actual implementation. This means that even if the actions object is recreated on every render, components using it won't re-render unnecessarily.
 
 WARNING: actions object needs to have the same structure every time and is only intended for providing functions, not data.
 
 ### State object
 
-State object is passed to children "as-is", however you are expected to only select what you need through the selector function. Library will only re-render when the returned value differ (based on `Object.is`).
+State object is passed to children "as-is", however you are expected to only select what you need through the selector function. The library will only re-render when the returned value differs (based on `Object.is`).
 
 So this way you can have very big state, but still be performant and avoid unnecessary re-renders.
 
@@ -106,15 +106,15 @@ const [CounterProvider, useCounterActions, useCounterState] = createProvider(() 
 });
 ```
 
-If you return react component from `createProvider` function, library will just render the component without providing context and rendering children.
+If you return a React component from the `createProvider` function, the library will just render the component without providing context and rendering children.
 
-This way you can make sure your children will never recieve `data` as undefined.
+This way you can make sure your children will never receive `data` as undefined.
 
 REMINDER: Don't use hooks after early return statement [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks) still apply!
 
 ### Provider with props
 
-You can pass props to your provider the same way as to any other react component and then use them in the provider body, you can also pass them through context as well.
+You can pass props to your provider the same way as to any other React component and then use them in the provider body, you can also pass them through context.
 
 ```tsx
 
@@ -144,7 +144,7 @@ function MyApp() {
 
 ### Using `shallow`
 
-If you need to transform data in the state selector, use shallow function to perform comparison on object properties instead of top level object.
+If you need to transform data in the state selector, use the shallow function to perform comparison on object properties instead of the top-level object.
 
 ```tsx
 import { shallow } from 'react-arven'
