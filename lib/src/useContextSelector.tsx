@@ -1,5 +1,6 @@
 import {
   createContext as createContextOrig,
+  useCallback,
   useContext as useContextOrig,
   useDebugValue,
   useEffect,
@@ -62,9 +63,15 @@ export function useContextSelector<T, X>(
   selector: (value: T) => X,
 ) {
   const store = useContextOrig(context as React.Context<Store<T>>);
+  const selectorRef = useRef(selector);
+  selectorRef.current = selector;
+  const getSnapshot = useCallback(
+    () => selectorRef.current(store?.value),
+    [store],
+  );
   const selected = useSyncExternalStore(
     store?.subscribe ?? dummySubscribe,
-    () => selector(store?.value),
+    getSnapshot,
   );
   useDebugValue("react-arven");
   return selected;
