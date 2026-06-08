@@ -1,3 +1,10 @@
+## [1.3.2](https://github.com/stepan662/react-arven/compare/v1.3.1...v1.3.2) (2026-06-08)
+
+
+### Bug Fixes
+
+* make store selector stable ([eae18ba](https://github.com/stepan662/react-arven/commit/eae18ba7514c0f5dd312e01d5e192e42d2c797d4))
+
 ## [1.3.1](https://github.com/stepan662/react-arven/compare/v1.3.0...v1.3.1) (2026-06-04)
 
 
