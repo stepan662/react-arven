@@ -189,6 +189,36 @@ function MyApp() {
 }
 ```
 
+## Performance
+
+### Selecting derived objects from state
+
+The provider body re-runs on every state change. This means that a derived object or array computed inline gets a new reference each time — which is normal React behaviour. As long as you select primitive values from state in your components, this is completely fine, since primitives are compared by value:
+
+```tsx
+const count = useCounterState(s => s.count)           // ✓ safe
+const filteredCount = useCounterState(s => s.filtered.length)  // ✓ safe
+```
+
+The problem arises when you select the whole derived object or array. Because re-render decisions are based on `Object.is`, the component will re-render on every state change even if the data hasn't changed:
+
+```tsx
+const filtered = useItemsState(s => s.filtered)  // ⚠ new reference every render
+```
+
+In that case, stabilize the reference in the provider with `useMemo`:
+
+```tsx
+const filtered = useMemo(
+  () => items.filter(x => x > threshold),
+  [items, threshold]
+);
+
+return {
+  state: { filtered },
+};
+```
+
 ### Using `shallow`
 
 If you need to transform data in the state selector, use the shallow function to perform comparison on object properties instead of the top-level object.
