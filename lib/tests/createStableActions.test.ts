@@ -19,7 +19,7 @@ type TestActions = {
 
 describe("createStableActions", () => {
   test("returns undefined if no actionsRef.current", () => {
-    const result = createStableActions({ current: undefined });
+    const result = createStableActions(undefined, { current: undefined });
     expect(result).toBeUndefined();
   });
 
@@ -28,7 +28,7 @@ describe("createStableActions", () => {
       increment: vi.fn(() => 1),
     };
     const actionsRef = { current: actions };
-    const stable = createStableActions(actionsRef);
+    const stable = createStableActions(actionsRef.current, actionsRef);
     expect(stable).toBeDefined();
     expect(typeof stable!.increment).toBe("function");
 
@@ -44,7 +44,7 @@ describe("createStableActions", () => {
       },
     };
     const actionsRef = { current: actions };
-    const stable = createStableActions(actionsRef);
+    const stable = createStableActions(actionsRef.current, actionsRef);
     expect(stable).toBeDefined();
     expect(typeof stable!.counter.increment).toBe("function");
 
@@ -55,7 +55,7 @@ describe("createStableActions", () => {
   test("stable actions use latest from ref", () => {
     const initialActions: TestActions = { test: vi.fn(() => "initial") };
     const actionsRef = { current: initialActions };
-    const stable = createStableActions(actionsRef);
+    const stable = createStableActions(actionsRef.current, actionsRef);
 
     const newActions: TestActions = { test: vi.fn(() => "updated") };
     actionsRef.current = newActions;
