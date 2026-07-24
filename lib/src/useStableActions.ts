@@ -75,11 +75,11 @@ export function useStableActions<A extends NonNullable<ActionMap> | undefined>(
   // still owns them — and useLatestRef ignores that absence, so a caller
   // holding a stale reference reaches a real function rather than a hole.
   const latestActions = useLatestRef<ActionMap | undefined>(actions);
-  const stableActions = useRef<A>();
+  const stableActions = useRef<A | undefined>(undefined);
 
   if (!stableActions.current && actions) {
     stableActions.current = createStableActions(actions, latestActions);
   }
 
-  return stableActions.current!;
+  return stableActions.current as A;
 }

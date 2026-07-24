@@ -3,8 +3,7 @@ node_modules/
 **/node_modules/
 
 # Build outputs
-lib/src/dist/
-testapp/dist/
+dist/
 
 # TypeScript
 *.tsbuildinfo
@@ -38,7 +37,6 @@ coverage/
 .nyc_output/
 
 # Misc
-dist/
 *.log
 
 # npm pack test output

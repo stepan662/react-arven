@@ -1,4 +1,7 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["lib", "testapp"]
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "files": []
 }

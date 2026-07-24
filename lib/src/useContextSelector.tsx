@@ -31,7 +31,7 @@ export function createSelectableContext<T>(): StoreContext<T> {
     value: T;
     children: React.ReactNode;
   }) => {
-    const storeRef = useRef<Store<T>>();
+    const storeRef = useRef<Store<T> | undefined>(undefined);
     let store = storeRef.current;
     if (!store) {
       const listeners = new Set<() => any>();
