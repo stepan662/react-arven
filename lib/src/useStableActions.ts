@@ -1,62 +1,71 @@
-import { RefObject, useRef } from "react";
+import { useRef } from "react";
+import { LatestRef, useLatestRef } from "./useLatestRef";
 
 export type ActionMap = {
   [key: string]: ((...args: any[]) => any) | ActionMap;
 };
 
+/**
+ * Mirrors the shape of `shape` with a tree of wrapper functions that resolve
+ * their implementation through `latest` at call time. The returned object can
+ * therefore be created once and still delegate to the newest closures.
+ *
+ * `shape` and `latest` are separate because the shape is needed during render,
+ * while the ref only catches up when that render commits.
+ */
 export function createStableActions<
   A extends NonNullable<ActionMap> | undefined,
->(actionsRef: RefObject<A | undefined>): A | undefined {
-  if (!actionsRef.current) {
-    return actionsRef.current ?? undefined;
+>(shape: A, latest: LatestRef<ActionMap | undefined>): A | undefined {
+  if (!shape) {
+    return undefined;
   }
-  const wrap = (currentObj: ActionMap, path: string[] = []): ActionMap => {
+
+  const wrap = (
+    node: ActionMap,
+    resolve: () => any,
+    path: string[] = [],
+  ): ActionMap => {
     const stableNode: ActionMap = {};
 
-    Object.keys(currentObj).forEach((key) => {
-      const value = currentObj[key];
-      const currentPath = [...path, key];
+    Object.keys(node).forEach((key) => {
+      const value = node[key];
+      // Each wrapper resolves through its parent, so a call walks the tree
+      // once instead of re-reducing a path array.
+      const resolveChild = () => resolve()?.[key];
 
       if (typeof value === "function") {
-        stableNode[key] = (...args: any[]) => {
-          const latestFn = currentPath.reduce(
-            (acc, k) => (acc as any)?.[k],
-            actionsRef.current,
-          ) as Function | undefined;
-
-          return latestFn?.(...args);
-        };
+        stableNode[key] = (...args: any[]) => resolveChild()?.(...args);
       } else if (
         value !== null &&
         typeof value === "object" &&
         !Array.isArray(value)
       ) {
-        stableNode[key] = wrap(value as ActionMap, currentPath);
+        stableNode[key] = wrap(value as ActionMap, resolveChild, [
+          ...path,
+          key,
+        ]);
       } else {
         throw new Error(
-          `[react-arven] Invalid action at "${currentPath.join(".")}". Only functions/objects.`,
+          `[react-arven] Invalid action at "${[...path, key].join(".")}". Only functions/objects.`,
         );
       }
     });
 
-    return stableNode!;
+    return stableNode;
   };
 
-  return wrap(actionsRef.current!) as A;
+  return wrap(shape, () => latest.current) as A;
 }
 
 export function useStableActions<A extends NonNullable<ActionMap> | undefined>(
   actions: A,
 ): A {
-  const currentActionsRef = useRef(actions);
-  const stableActionsRef = useRef<A>();
+  const latestActions = useLatestRef<ActionMap | undefined>(actions);
+  const stableActions = useRef<A>();
 
-  currentActionsRef.current = actions;
-
-  // stable actions
-  if (!stableActionsRef.current) {
-    stableActionsRef.current = createStableActions(currentActionsRef);
+  if (!stableActions.current && actions) {
+    stableActions.current = createStableActions(actions, latestActions);
   }
 
-  return stableActionsRef.current!;
+  return stableActions.current!;
 }

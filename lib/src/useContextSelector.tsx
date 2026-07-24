@@ -72,6 +72,10 @@ export function useContextSelector<T, X>(
   const selected = useSyncExternalStore(
     store?.subscribe ?? dummySubscribe,
     getSnapshot,
+    // The store value is assigned during render, so the client snapshot is
+    // also correct on the server. Without this, useSyncExternalStore throws
+    // "Missing getServerSnapshot" during SSR.
+    getSnapshot,
   );
   useDebugValue("react-arven");
   return selected;
