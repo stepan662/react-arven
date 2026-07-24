@@ -111,7 +111,7 @@ export function createProvider<
   ) {
     requireStore("useState");
 
-    const prevValue = React.useRef<SelectorReturn>();
+    const prevValue = React.useRef<SelectorReturn | undefined>(undefined);
 
     const stableSelector = React.useCallback(
       (contextValue: any) => {
