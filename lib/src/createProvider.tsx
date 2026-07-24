@@ -89,14 +89,28 @@ export function createProvider<
     return <Context.Provider value={value}>{children}</Context.Provider>;
   };
 
+  const requireStore = (hook: string) => {
+    const store = useStoreContext(Context);
+
+    if (!store) {
+      throw new Error(
+        `[react-arven] ${hook} was called outside of its Provider.`,
+      );
+    }
+
+    return store;
+  };
+
   const useActions = () => {
-    return useStoreContext(Context)?.value?.actions;
+    return requireStore("useActions").value?.actions;
   };
 
   const useStateContext = function <SelectorReturn>(
     selector: SelectorType<StateType, SelectorReturn>,
     equalityFn: EqualityFn = Object.is,
   ) {
+    requireStore("useState");
+
     const prevValue = React.useRef<SelectorReturn>();
 
     const stableSelector = React.useCallback(
