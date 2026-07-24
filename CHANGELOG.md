@@ -1,3 +1,16 @@
+# [1.4.0](https://github.com/stepan662/react-arven/compare/v1.3.2...v1.4.0) (2026-07-24)
+
+
+### Bug Fixes
+
+* testcompiler ([5e605ea](https://github.com/stepan662/react-arven/commit/5e605ea37f504a45b9893eab88b2c636f3a1ffb0))
+* testcompiler ([652f7fa](https://github.com/stepan662/react-arven/commit/652f7fa059eba8b495314d7bf0d0b718a91d1789))
+
+
+### Features
+
+* test with concurrent mode and suspense ([6682579](https://github.com/stepan662/react-arven/commit/66825791a2eff04ee3dc670032cbaa7124817465))
+
 ## [1.3.2](https://github.com/stepan662/react-arven/compare/v1.3.1...v1.3.2) (2026-06-08)
 
 
