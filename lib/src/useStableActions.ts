@@ -37,7 +37,7 @@ export function createStableActions<
 
           if (typeof fn !== "function") {
             throw new Error(
-              `[react-arven] Action "${[...path, key].join(".")}" is missing from the current actions. The actions object must have the same shape on every render.`,
+              `[react-arven] Action "${[...path, key].join(".")}" is missing. Actions must have the same shape on every render.`,
             );
           }
 

@@ -315,55 +315,58 @@ describe("createProvider", () => {
     expect(screen.getByText("Start loading")).toBeTruthy();
   });
 
-  test("useStateContext won't fail without provider", () => {
-    const [Provider, useActions, useStateContext] = createProvider(() => {
-      const [loading, setLoading] = useState(false);
+  describe("without a provider", () => {
+    const makeProvider = () =>
+      createProvider(() => {
+        const [loading, setLoading] = useState(false);
 
-      const toggleLoading = () => setLoading((prev) => !prev);
+        const toggleLoading = () => setLoading((prev) => !prev);
 
-      if (loading) {
-        return <button onClick={toggleLoading}>Loading... Stop</button>;
+        if (loading) {
+          return <button onClick={toggleLoading}>Loading... Stop</button>;
+        }
+
+        return {
+          state: { loading },
+          actions: { toggleLoading },
+        };
+      });
+
+    // React logs render errors itself; keep the reporter readable.
+    const renderSilently = (ui: React.ReactElement) => {
+      const original = console.error;
+      console.error = () => {};
+      try {
+        render(ui);
+      } finally {
+        console.error = original;
       }
-
-      return {
-        state: { loading },
-        actions: { toggleLoading },
-      };
-    });
-
-    const TestComponent = () => {
-      const state = useStateContext((s) => s);
-      return <button>State: "{`${state}`}"</button>;
     };
 
-    render(<TestComponent />);
+    test("useStateContext fails", () => {
+      const [, , useStateContext] = makeProvider();
 
-    expect(screen.queryByText('State: "undefined"')).toBeTruthy();
-  });
-
-  test("useStateActions won't fail without provider", () => {
-    const [Provider, useActions] = createProvider(() => {
-      const [loading, setLoading] = useState(false);
-
-      const toggleLoading = () => setLoading((prev) => !prev);
-
-      if (loading) {
-        return <button onClick={toggleLoading}>Loading... Stop</button>;
-      }
-
-      return {
-        state: { loading },
-        actions: { toggleLoading },
+      const TestComponent = () => {
+        const state = useStateContext((s) => s);
+        return <button>State: "{`${state}`}"</button>;
       };
+
+      expect(() => renderSilently(<TestComponent />)).toThrow(
+        /useState was called outside of its Provider/,
+      );
     });
 
-    const TestComponent = () => {
-      const actions = useActions();
-      return <button>Actions: "{`${actions}`}"</button>;
-    };
+    test("useActions fails", () => {
+      const [, useActions] = makeProvider();
 
-    render(<TestComponent />);
+      const TestComponent = () => {
+        const actions = useActions();
+        return <button>Actions: "{`${actions}`}"</button>;
+      };
 
-    expect(screen.queryByText('Actions: "undefined"')).toBeTruthy();
+      expect(() => renderSilently(<TestComponent />)).toThrow(
+        /useActions was called outside of its Provider/,
+      );
+    });
   });
 });
