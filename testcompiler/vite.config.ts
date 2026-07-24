@@ -8,12 +8,20 @@ export default defineConfig({
     react(),
     babel({
       presets: [reactCompilerPreset()],
-      // react-arven is a symlinked workspace dep, so vite resolves it to its
-      // real path under ../lib — which has no "node_modules" segment for the
-      // default exclude to match. Without this the compiler rewrites the
-      // library's prebuilt dist and injects "react/compiler-runtime", which
-      // then resolves against lib's own React 18 and fails.
+      // Not required to build — resolve.dedupe below already makes the
+      // library's injected "react/compiler-runtime" resolve correctly. This is
+      // for fidelity: react-arven is symlinked to ../lib, so its real path has
+      // no "node_modules" segment and the default exclude misses it. Installed
+      // consumers always have it under node_modules, where it is never
+      // compiled, so scoping to app source tests what users actually run.
       include: [/[\\/]testcompiler[\\/]src[\\/]/],
     }),
   ],
+  resolve: {
+    // react-arven is symlinked to ../lib, which has its own React 18 for the
+    // multi-version test matrix. Without deduping, the library's bare "react"
+    // import resolves there and the bundle ends up with two Reacts — the
+    // library calls React 18's hooks while react-dom 19 does the rendering.
+    dedupe: ["react", "react-dom"],
+  },
 });
