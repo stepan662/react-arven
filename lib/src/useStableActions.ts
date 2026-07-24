@@ -29,18 +29,29 @@ export function createStableActions<
 
     Object.keys(node).forEach((key) => {
       const value = node[key];
-      // Each wrapper resolves through its parent, so a call walks the tree
-      // once instead of re-reducing a path array.
-      const resolveChild = () => resolve()?.[key];
 
       if (typeof value === "function") {
-        stableNode[key] = (...args: any[]) => resolveChild()?.(...args);
+        stableNode[key] = (...args: any[]) => {
+          const parent = resolve();
+          const fn = parent?.[key];
+
+          if (typeof fn !== "function") {
+            throw new Error(
+              `[react-arven] Action "${[...path, key].join(".")}" is missing from the current actions. The actions object must have the same shape on every render.`,
+            );
+          }
+
+          // Called via the parent so `this` refers to the latest namespace.
+          return fn.apply(parent, args);
+        };
       } else if (
         value !== null &&
         typeof value === "object" &&
         !Array.isArray(value)
       ) {
-        stableNode[key] = wrap(value as ActionMap, resolveChild, [
+        // Nested namespaces resolve through their parent, so a call walks the
+        // tree once instead of re-reducing a path array.
+        stableNode[key] = wrap(value as ActionMap, () => resolve()?.[key], [
           ...path,
           key,
         ]);
@@ -60,6 +71,9 @@ export function createStableActions<
 export function useStableActions<A extends NonNullable<ActionMap> | undefined>(
   actions: A,
 ): A {
+  // A render that returns a fallback provides no actions, but the provider
+  // still owns them — and useLatestRef ignores that absence, so a caller
+  // holding a stale reference reaches a real function rather than a hole.
   const latestActions = useLatestRef<ActionMap | undefined>(actions);
   const stableActions = useRef<A>();
 

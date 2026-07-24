@@ -15,5 +15,5 @@
       "@test-utils": ["./tests/test-utils.ts"]
     }
   },
-  "include": ["src/**/*", "tests/createProvider.test.tsx", "tests/ssr.test.tsx", "tests/suspense.test.tsx", "tests/createStableActions.test.ts", "tests/renderPerformance.test.tsx", "tests/shallow.test.ts", "tests/test-utils-react16.ts", "tests/test-utils-react17.ts", "tests/test-utils.ts"]
+  "include": ["src/**/*", "tests/**/*.ts"]
 }

@@ -1,34 +1,8 @@
-import React from "react";
-import { createProvider } from "react-arven";
-
-const [CounterProvider, useCounterActions, useCounterState] = createProvider(
-  () => {
-    "use memo";
-    const [count, setCount] = React.useState({ count: 0 });
-
-    const actions = {
-      increment() {
-        setCount((prev) => ({ count: prev.count + 1 }));
-      },
-      decrement() {
-        setCount((prev) => ({ count: prev.count - 1 }));
-      },
-      pointless() {
-        setCount((prev) => ({ count: prev.count }));
-      },
-    };
-
-    const derrived = { count: count.count * count.count };
-
-    return {
-      state: {
-        count,
-        derrived,
-      },
-      actions,
-    };
-  },
-);
+import {
+  CounterProvider,
+  useCounterActions,
+  useCounterState,
+} from "./CounterProvider";
 
 function Counter() {
   const derrived = useCounterState((c) => c.derrived);
