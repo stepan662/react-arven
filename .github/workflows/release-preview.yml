@@ -1,0 +1,92 @@
+name: Release Preview
+
+on:
+  pull_request:
+    branches:
+      - main
+      - rc
+
+permissions:
+  # `contents: write` is only ever granted to pull requests from this
+  # repository — semantic-release needs push access to verify it *could*
+  # release (it never pushes: the run is a dry run).
+  contents: write
+  pull-requests: write
+
+jobs:
+  preview:
+    name: Preview release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout merge commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # The checkout above is the base + head merge commit in a detached HEAD.
+      # Naming it after the base branch makes semantic-release evaluate it with
+      # that branch's rules, which is exactly the "what would merging do?"
+      # question.
+      - name: Pose as the base branch
+        run: git checkout -B "$BASE_REF"
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Semantic Release dry run
+        id: preview
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node ./scripts/release-dry-run.mjs > release-preview.md
+          cat release-preview.md
+
+      - name: Comment on the pull request
+        # Pull requests from forks get a read-only token, so the comment (and
+        # the dry run itself) is skipped there — the job summary still shows it.
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs')
+            const marker = '<!-- release-dry-run -->'
+            const body = fs.readFileSync('release-preview.md', 'utf8')
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            })
+
+            const existing = comments.find(
+              (comment) => comment.user.type === 'Bot' && comment.body.includes(marker),
+            )
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              })
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              })
+            }

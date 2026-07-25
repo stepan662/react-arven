@@ -1,0 +1,103 @@
+name: Guard main
+
+on:
+  pull_request:
+    branches:
+      - main
+    # `labeled`/`unlabeled` so applying the override re-runs the check straight
+    # away; `edited` catches a pull request being retargeted at main.
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  guard:
+    name: Only rc merges into main
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check the source branch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request
+            const head = pr.head.ref
+            const OVERRIDE = 'direct-to-main'
+
+            if (head === 'rc') {
+              core.summary.addRaw(
+                'Merging `rc` — this publishes a stable version to the `latest` npm tag.',
+              )
+              await core.summary.write()
+              return
+            }
+
+            if (pr.labels.some((label) => label.name === OVERRIDE)) {
+              core.summary.addRaw(
+                `Merging \`${head}\` straight into \`main\` — allowed by the \`${OVERRIDE}\` label.`,
+              )
+              await core.summary.write()
+              return
+            }
+
+            const target = { owner: context.repo.owner, repo: context.repo.repo }
+            const explain =
+              '`main` publishes to the `latest` npm tag; work reaches it by way of `rc`, ' +
+              'which publishes `x.y.z-rc.N` prereleases.'
+
+            // A pull request opened against main is almost always just the default
+            // base showing through, so retarget it at rc rather than making every
+            // pull request fail a check first. Retargeting on `opened` only means
+            // deliberately setting the base back to main isn't undone — that path
+            // falls through to the failure below and wants the label.
+            const canRetarget =
+              context.payload.action === 'opened' &&
+              pr.head.repo.full_name === `${target.owner}/${target.repo}`
+
+            if (canRetarget) {
+              try {
+                await github.rest.pulls.update({ ...target, pull_number: pr.number, base: 'rc' })
+              } catch (error) {
+                core.setFailed(
+                  `Couldn't retarget this pull request at \`rc\`: ${error.message}. ` +
+                    'Change the base branch by hand, or add the `direct-to-main` label to release ' +
+                    `\`${head}\` straight to the \`latest\` npm tag.`,
+                )
+                return
+              }
+
+              const body = [
+                `Retargeted at \`rc\`. ${explain}`,
+                '',
+                `To release \`${head}\` straight to \`latest\` anyway — a hotfix, say — set the base ` +
+                  `back to \`main\` and add the \`${OVERRIDE}\` label.`,
+              ].join('\n')
+
+              await github.rest.issues.createComment({
+                ...target,
+                issue_number: pr.number,
+                body,
+              })
+
+              core.summary.addRaw(body)
+              await core.summary.write()
+              return
+            }
+
+            core.summary.addHeading('This pull request targets `main`', 2)
+            core.summary.addRaw(
+              [
+                explain,
+                '',
+                'Change the base branch to `rc` (Edit → change base branch), or add the ' +
+                  `\`${OVERRIDE}\` label to release \`${head}\` straight to the \`latest\` npm tag.`,
+              ].join('\n'),
+            )
+            await core.summary.write()
+
+            core.setFailed(
+              `Pull requests into main should come from 'rc'. Change the base branch to 'rc', or add ` +
+                `the '${OVERRIDE}' label to release '${head}' straight to the latest npm tag.`,
+            )

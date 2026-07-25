@@ -3,7 +3,7 @@ name: Release
 on:
   workflow_run:
     workflows: ['Test']
-    branches: [main]
+    branches: [main, rc]
     types: [completed]
 
 permissions:
@@ -18,6 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
+    env:
+      # `main` publishes stable versions, `rc` publishes prereleases.
+      RELEASE_BRANCH: ${{ github.event.workflow_run.head_branch }}
+
     steps:
       - name: Generate Token
         id: generate_token
@@ -29,7 +33,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: ${{ github.event.workflow_run.head_branch }}
           fetch-depth: 0
           token: ${{ steps.generate_token.outputs.token }}
 
@@ -59,7 +63,10 @@ jobs:
 
       - name: Get version after release
         id: post_release
-        run: echo "version=$(node -p "require('./lib/package.json').version")" >> $GITHUB_OUTPUT
+        run: |
+          VERSION=$(node -p "require('./lib/package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "dist_tag=$(node ./scripts/npm-dist-tag.mjs "$VERSION")" >> $GITHUB_OUTPUT
 
       - name: Copy docs to package
         if: steps.pre_release.outputs.version != steps.post_release.outputs.version
@@ -68,4 +75,9 @@ jobs:
       - name: Publish to npm
         if: steps.pre_release.outputs.version != steps.post_release.outputs.version
         working-directory: lib
-        run: npm publish --provenance --access public
+        run: npm publish --provenance --access public --tag ${{ steps.post_release.outputs.dist_tag }}
+
+      - name: Summary
+        if: steps.pre_release.outputs.version != steps.post_release.outputs.version
+        run: |
+          echo "Published \`react-arven@${{ steps.post_release.outputs.version }}\` under the \`${{ steps.post_release.outputs.dist_tag }}\` npm tag." >> $GITHUB_STEP_SUMMARY

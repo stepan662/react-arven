@@ -11,6 +11,7 @@
     "lint": "pnpm -r lint",
     "tsc": "pnpm -r tsc",
     "clean": "node ./scripts/clean.js",
+    "release:dry": "node ./scripts/release-dry-run.mjs",
     "publish-prerelease": "bash ./scripts/publish-prerelease.sh",
     "test:pack": "node scripts/test-pack.mjs"
   },
