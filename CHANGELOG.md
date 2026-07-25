@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/stepan662/react-arven/compare/v2.0.0...v2.1.0) (2026-07-25)
+
+
+### Features
+
+* make hooks return null outside of context ([13933a8](https://github.com/stepan662/react-arven/commit/13933a826219233d67ab599d16ca3efc23b5d357))
+
 # [2.0.0](https://github.com/stepan662/react-arven/compare/v1.4.1...v2.0.0) (2026-07-25)
 
 
