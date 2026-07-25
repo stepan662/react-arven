@@ -29,6 +29,8 @@ Install react-arven with npm, yarn or pnpm:
 npm i react-arven
 ```
 
+Compatible with React 18+.
+
 ## Usage
 
 ### Create provider
@@ -288,6 +290,11 @@ and the `useMemo` from the previous section becomes unnecessary.
 
 Actions never needed the compiler — `createProvider` already gives them stable
 references through its [actions object](#actions-object).
+
+The compiler is not required by React Arven, and neither form of the provider
+body needs it to work. On React 19 its output runs as-is; on React 18 it
+additionally needs `target: '18'` and the `react-compiler-runtime` package — see
+[the React Compiler docs](https://react.dev/reference/react-compiler/target).
 
 ### Using `shallow`
 
