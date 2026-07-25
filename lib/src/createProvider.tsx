@@ -33,6 +33,12 @@ type ExtractControllerData<T> = T extends {
  * `null`/`undefined`) to act as a pure render gate — in that case no context
  * is provided and the element is rendered as-is.
  *
+ * Declare the controller as a standalone top-level function named `useSomething`
+ * and pass it in by reference, rather than inlining it here. Both
+ * `eslint-plugin-react-hooks` and the React Compiler recognise a hook by that
+ * shape only: an inline function expression gets no Rules of Hooks checking and
+ * none of the compiler's automatic memoization.
+ *
  * Returns a tuple of three values:
  * - `Provider` — the React component that wraps your tree and supplies context.
  * - `useActions` — a hook that returns the stable actions object.

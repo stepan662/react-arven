@@ -1,28 +1,29 @@
 import React from "react";
 import { createProvider, shallow } from "react-arven";
 
-const [CounterProvider, useCounterActions, useCounterState] = createProvider(
-  () => {
-    const [state, setState] = React.useState({ count: 0 });
+function useCounterStore() {
+  const [state, setState] = React.useState({ count: 0 });
 
-    const actions = {
-      increment() {
-        setState((prev) => ({ count: prev.count + 1 }));
-      },
-      decrement() {
-        setState((prev) => ({ count: prev.count - 1 }));
-      },
-      pointless() {
-        setState((prev) => ({ count: prev.count }));
-      },
-    };
+  const actions = {
+    increment() {
+      setState((prev) => ({ count: prev.count + 1 }));
+    },
+    decrement() {
+      setState((prev) => ({ count: prev.count - 1 }));
+    },
+    pointless() {
+      setState((prev) => ({ count: prev.count }));
+    },
+  };
 
-    return {
-      state,
-      actions,
-    };
-  },
-);
+  return {
+    state,
+    actions,
+  };
+}
+
+const [CounterProvider, useCounterActions, useCounterState] =
+  createProvider(useCounterStore);
 
 function Counter() {
   const state = useCounterState((state) => ({ ...state }), shallow);
