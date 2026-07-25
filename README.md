@@ -10,7 +10,7 @@ A lightweight, fully typed React context helper with **stable action references*
 
 ## Why React Arven?
 
-It let's you use ReactContext in a way one would hope it worked by default. It avoids the performance gotchas. Have your state where you need it and provide it down to the children effortlesly.
+It lets you use React Context the way you would hope it worked by default, without the usual performance gotchas. Have your state where you need it and provide it down to the children effortlessly.
 
 |                          | React Arven | plain `useContext`     | Zustand | constate               | use-context-selector   |
 | ------------------------ | ----------- | ---------------------- | ------- | ---------------------- | ---------------------- |
@@ -33,7 +33,7 @@ npm i react-arven
 
 ### Create provider
 
-Your store is just a hook which returns state and actions. Wrap it with `createProvider` and you'll get Provider component and two hooks.
+Your store is just a hook that returns state and actions. Wrap it with `createProvider` and you'll get a Provider component and two hooks.
 
 ```tsx
 import { createProvider } from "react-arven";
@@ -59,7 +59,7 @@ export const [CounterProvider, useCounterActions, useCounterState] =
 1. `actions` - is an object with functions, to modify the state, accessible through `useCounterActions`
 2. `state` - is a subscribable state, which you can access through `useCounterState`
 
-You can name your provider and hooks whatever you like. I recommend convention similar to this one.
+You can name your provider and hooks whatever you like. I recommend a convention similar to this one.
 
 Both hooks are typed automatically through type inference, if you use TypeScript.
 
