@@ -1,3 +1,10 @@
+// @vitest-environment node
+//
+// Deliberately not jsdom. `useIsomorphicLayoutEffect` picks its effect from
+// `typeof window`, so under jsdom a server render still takes the
+// useLayoutEffect branch — which React warns about and which no real server
+// ever does. Running without a DOM is both the faithful environment and the
+// only one that actually covers the server branch of that guard.
 import React, { useState } from "react";
 import { describe, test, expect } from "vitest";
 import { renderToString } from "react-dom/server";

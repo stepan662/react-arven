@@ -84,7 +84,32 @@ jobs:
       - name: Test npm pack
         run: pnpm test:pack
 
-  typecheck:
+  lint:
+    name: Lint react-compiler app
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      # No build needed: the react-hooks/compiler rules work off source, not
+      # the library's built types.
+      - name: Lint
+        run: pnpm lint
+
+  tsc:
     name: Typecheck packages
     runs-on: ubuntu-latest
 
@@ -108,4 +133,4 @@ jobs:
         run: pnpm build
 
       - name: Typecheck testapp
-        run: pnpm typecheck
+        run: pnpm tsc

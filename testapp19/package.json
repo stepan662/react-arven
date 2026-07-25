@@ -6,11 +6,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "tsc": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "react-arven": "workspace:*",
     "react": "^19.2.0",
+    "react-arven": "workspace:*",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {

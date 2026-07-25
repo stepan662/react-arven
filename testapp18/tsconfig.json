@@ -7,10 +7,13 @@
     "isolatedModules": true,
     "noEmit": true,
     "types": ["vite/client"],
-    "baseUrl": ".",
+    // Pin to this app's own React 18 types. Without it TypeScript picks up a
+    // different @types/react from the workspace and reports a spurious
+    // ReactNode/ReactPortal mismatch. Paths must be relative — a bare
+    // "node_modules/..." requires baseUrl, which is deprecated.
     "paths": {
-      "react": ["node_modules/@types/react"],
-      "react-dom": ["node_modules/@types/react-dom"]
+      "react": ["./node_modules/@types/react"],
+      "react-dom": ["./node_modules/@types/react-dom"]
     }
   },
   "include": ["src", "index.html"]

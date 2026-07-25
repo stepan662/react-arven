@@ -1,7 +1,5 @@
 packages:
   - lib
-  - testapp16
-  - testapp17
   - testapp18
   - testapp19
   - testcompiler
