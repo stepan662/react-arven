@@ -1,3 +1,10 @@
+# [2.2.0](https://github.com/stepan662/react-arven/compare/v2.1.0...v2.2.0) (2026-07-25)
+
+
+### Features
+
+* include compatibility ([82b9743](https://github.com/stepan662/react-arven/commit/82b974384587143c45348411cf392af300cef551))
+
 # [2.1.0](https://github.com/stepan662/react-arven/compare/v2.0.0...v2.1.0) (2026-07-25)
 
 
