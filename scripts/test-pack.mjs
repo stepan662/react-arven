@@ -3,8 +3,10 @@
  * Smoke-tests the npm package before publishing:
  *   1. Packs lib/ into pack-test/ (tarball + extracted package/)
  *   2. Verifies every file-referencing field in package.json points to a real file
- *   3. Syntax-checks all dist JS files with `node --check`
- *   4. Confirms expected exports appear in the .d.ts
+ *   3. Syntax-checks all dist bundles with `node --check`
+ *   4. Confirms the "use client" banner survived minification
+ *   5. Confirms expected exports appear in every .d.ts flavour
+ *   6. Runs publint and are-the-types-wrong against the packed output
  *
  * Output is left in pack-test/ for inspection (gitignored).
  */
@@ -99,10 +101,15 @@ try {
     }
   }
 
-  // 5. Syntax-check dist JS
-  console.log("\nSyntax-checking dist/*.js ...");
+  // 5. Syntax-check dist JS. The extension decides how `node --check` parses
+  // each file, so this also catches ESM emitted into a CJS-interpreted file.
+  console.log("\nSyntax-checking dist bundles...");
   const distDir = join(packageDir, "dist");
-  for (const file of readdirSync(distDir).filter((f) => f.endsWith(".js"))) {
+  const bundles = readdirSync(distDir).filter(
+    (f) => f.endsWith(".mjs") || f.endsWith(".cjs") || f.endsWith(".js"),
+  );
+  if (bundles.length === 0) fail("no dist bundles found");
+  for (const file of bundles) {
     try {
       execSync(`node --check "${join(distDir, file)}"`, { stdio: "pipe" });
       pass(file);
@@ -111,15 +118,56 @@ try {
     }
   }
 
-  // 6. Expected exports in .d.ts
-  console.log("\nChecking .d.ts for expected exports...");
-  const dts = readFileSync(join(packageDir, pkg.types), "utf-8");
-  for (const name of ["createProvider", "shallow"]) {
-    if (dts.includes(name)) {
-      pass(name);
+  // 6. "use client" must survive minification, or React Server Components
+  // consumers get a hard error on import.
+  console.log('\nChecking "use client" directive...');
+  for (const file of bundles) {
+    const head = readFileSync(join(distDir, file), "utf-8").slice(0, 40);
+    if (/^["']use client["']/.test(head)) {
+      pass(file);
     } else {
-      fail(`"${name}" not found in ${pkg.types}`);
+      fail(`${file} — missing "use client" banner`);
     }
+  }
+
+  // 7. Expected exports in every .d.ts flavour
+  console.log("\nChecking declarations for expected exports...");
+  const declarations = readdirSync(distDir).filter((f) => /\.d\.[mc]?ts$/.test(f));
+  if (declarations.length === 0) fail("no declaration files found");
+  for (const file of declarations) {
+    const dts = readFileSync(join(distDir, file), "utf-8");
+    const missing = ["createProvider", "shallow"].filter(
+      (name) => !dts.includes(name),
+    );
+    if (missing.length === 0) {
+      pass(file);
+    } else {
+      fail(`${file} — missing ${missing.join(", ")}`);
+    }
+  }
+
+  // 8. publint — exports-map ordering, format/extension mismatches
+  console.log("\nRunning publint...");
+  try {
+    execSync(`npx --no-install publint --strict`, {
+      cwd: packageDir,
+      stdio: "pipe",
+    });
+    pass("publint clean");
+  } catch (e) {
+    fail(`publint:\n${e.stdout?.toString().trim()}`);
+  }
+
+  // 9. are-the-types-wrong — resolution under node10/node16/bundler
+  console.log("\nRunning are-the-types-wrong...");
+  try {
+    execSync(`npx --no-install attw --pack . --format table-flipped`, {
+      cwd: packageDir,
+      stdio: "pipe",
+    });
+    pass("attw clean");
+  } catch (e) {
+    fail(`attw:\n${e.stdout?.toString().trim()}`);
   }
 } catch (err) {
   console.error("\nFatal:", err.message);

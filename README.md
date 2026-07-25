@@ -40,18 +40,20 @@ You create a provider component, you can use hooks there as in a regular React c
 ```tsx
 import { createProvider } from "react-arven";
 
-const [CounterProvider, useCounterActions, useCounterState] = createProvider(() => {
-  const [count, setCount] = useState(0);
+const [CounterProvider, useCounterActions, useCounterState] = createProvider(
+  function useCounterStore() {
+    const [count, setCount] = useState(0);
 
-  function increment() {          // No useCallback necessary!
-    setCount(val => val + 1)
+    function increment() {          // No useCallback necessary!
+      setCount(val => val + 1)
+    }
+
+    return {
+      actions: { increment },
+      state: { count },
+    };
   }
-
-  return {
-    actions: { increment },
-    state: { count },
-  };
-});
+);
 ```
 
 1. `actions` - is an object with functions, to modify the state, accessible through `useCounterActions`
@@ -60,6 +62,13 @@ const [CounterProvider, useCounterActions, useCounterState] = createProvider(() 
 You can name your provider and hooks whatever you like. I recommend convention similar to this one.
 
 Both hooks are typed automatically through type inference, if you use TypeScript.
+
+> **Tip:** Name the function `useSomething`, as above. The provider body is a hook —
+> but `eslint-plugin-react-hooks` only recognises it as one if its name says so.
+> An anonymous `() => {...}` gets no lint coverage at all, so a hook called after
+> an [early return](#early-return) goes unreported. Naming it costs nothing and
+> turns the [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks)
+> checks back on.
 
 ### Use provider in your app
 
@@ -140,25 +149,29 @@ If you know your state is not complete while you are waiting for some async data
 ```tsx
 import { createProvider } from "react-arven";
 
-const [CounterProvider, useCounterActions, useCounterState] = createProvider(() => {
-  const { data, refetch } = useSomeFetchFunction(....);
+const [CounterProvider, useCounterActions, useCounterState] = createProvider(
+  function useCounterStore() {
+    const { data, refetch } = useSomeFetchFunction(....);
 
-  if (!data) {
-    return <LoadingFallback />
+    if (!data) {
+      return <LoadingFallback />
+    }
+
+    return {
+      actions: { refetch },
+      state: { data },
+    };
   }
-
-  return {
-    actions: { refetch },
-    state: { data },
-  };
-});
+);
 ```
 
 If you return a React component from the `createProvider` function, the library will just render the component without providing context and rendering children.
 
 This way you can make sure your children will never receive `data` as undefined.
 
-> **Note:** Don't use hooks after early return statement — [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks) still apply!
+> **Note:** Don't use hooks after early return statement — [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks) still apply! Naming the
+> function `useCounterStore` rather than leaving it anonymous is what lets
+> `eslint-plugin-react-hooks` catch this for you.
 
 ### Provider with props
 
@@ -169,14 +182,16 @@ type Props = {
   itemId: number
 }
 
-const [ItemDataProvider, ...] = createProvider(({ itemId }: Props) => {
-  const { data, refetch } = useSomeFetchFunction(`/api/item/${itemId}`);
+const [ItemDataProvider, ...] = createProvider(
+  function useItemDataStore({ itemId }: Props) {
+    const { data, refetch } = useSomeFetchFunction(`/api/item/${itemId}`);
 
-  return {
-    actions: { refetch },
-    state: { data, itemId },
-  };
-});
+    return {
+      actions: { refetch },
+      state: { data, itemId },
+    };
+  }
+);
 
 // Usage:
 
@@ -230,7 +245,7 @@ function Counter() {
   const { count, label } = useCounterState(
     s => ({
       count: s.count,
-      label: c.label
+      label: s.label
     }),
     shallow
   )

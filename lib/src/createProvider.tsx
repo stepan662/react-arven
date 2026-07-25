@@ -111,24 +111,16 @@ export function createProvider<
   ) {
     requireStore("useState");
 
-    const prevValue = React.useRef<SelectorReturn | undefined>(undefined);
-
-    const stableSelector = React.useCallback(
-      (contextValue: any) => {
-        const state = contextValue?.state;
-        const newValue = selector(state);
-
-        if (equalityFn(prevValue.current, newValue)) {
-          return prevValue.current as SelectorReturn;
-        }
-
-        prevValue.current = newValue;
-        return newValue;
-      },
-      [selector, equalityFn],
+    // Unwraps the context value before handing the state to the caller's
+    // selector. Memoised on `selector` so a hoisted selector keeps a stable
+    // identity all the way down; an inline one changes every render either way.
+    const stateSelector = React.useCallback(
+      (contextValue: { state: StateType } | undefined) =>
+        selector(contextValue?.state as StateType),
+      [selector],
     );
 
-    return useContextSelector(Context, stableSelector);
+    return useContextSelector(Context, stateSelector, equalityFn);
   };
 
   return [Provider, useActions, useStateContext] as const;

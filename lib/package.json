@@ -7,31 +7,36 @@
   "repository": {
     "url": "https://github.com/stepan662/react-arven"
   },
-  "main": "./dist/index.cjs.js",
-  "module": "./dist/index.esm.js",
-  "browser": "./dist/index.esm.min.js",
-  "unpkg": "./dist/index.esm.min.js",
-  "jsdelivr": "./dist/index.esm.min.js",
-  "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
-      "import": "./dist/index.esm.js",
-      "require": "./dist/index.cjs.js",
-      "browser": "./dist/index.esm.min.js",
-      "types": "./dist/index.d.ts"
-    }
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./package.json": "./package.json"
   },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/index.min.mjs",
+  "jsdelivr": "./dist/index.min.mjs",
   "files": [
     "dist"
   ],
   "scripts": {
     "build": "rollup -c ../rollup.config.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "tsc": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },
   "peerDependencies": {
-    "react": "^17.0.0 || ^18.0.0 || ^19.0.0",
-    "react-dom": "^17.0.0 || ^18.0.0 || ^19.0.0"
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.0",

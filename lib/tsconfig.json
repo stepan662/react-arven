@@ -3,7 +3,6 @@
   "compilerOptions": {
     "outDir": "./dist",
     "declaration": true,
-    "declarationDir": "./dist",
     "rootDir": "./",
     "noEmit": false,
     "jsx": "react-jsx",
@@ -15,5 +14,5 @@
       "@test-utils": ["./tests/test-utils.ts"]
     }
   },
-  "include": ["src/**/*", "tests/**/*.ts"]
+  "include": ["src/**/*", "tests/**/*"]
 }

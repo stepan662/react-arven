@@ -7,6 +7,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     globals: true,
+    chaiConfig: {
+      truncateThreshold: 0,
+    },
   },
   resolve: {
     alias: [
