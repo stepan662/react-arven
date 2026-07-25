@@ -10,9 +10,7 @@ A lightweight, fully typed React context helper with **stable action references*
 
 ## Why React Arven?
 
-Plain `useContext` re-renders every consumer on every state change, which pushes you toward splitting contexts, memoizing selectors, and wrapping every action in `useCallback`. Libraries like Zustand or Jotai solve this but live outside the React component tree — you lose the ability to use hooks naturally inside the store.
-
-React Arven sits in the middle: it gives you a hook-friendly provider body (just write hooks as you normally would), granular re-renders via selector subscriptions, and stable action references — without any extra boilerplate.
+It let's you use ReactContext in a way one would hope it worked by default. It avoids the performance gotchas. Have your state where you need it and provide it down to the children effortlesly.
 
 |                          | React Arven | plain `useContext`     | Zustand | constate               | use-context-selector   |
 | ------------------------ | ----------- | ---------------------- | ------- | ---------------------- | ---------------------- |
@@ -35,26 +33,27 @@ npm i react-arven
 
 ### Create provider
 
-You create a provider component, you can use hooks there as in a regular React component. Instead of rendering HTML, we return an object with actions and state properties.
+Your store is just a hook which returns state and actions. Wrap it with `createProvider` and you'll get Provider component and two hooks.
 
 ```tsx
 import { createProvider } from "react-arven";
 
-const [CounterProvider, useCounterActions, useCounterState] = createProvider(
-  function useCounterStore() {
-    const [count, setCount] = useState(0);
+function useCounterStore() {
+  const [count, setCount] = useState(0);
 
-    function increment() {
-      // No useCallback necessary!
-      setCount((val) => val + 1);
-    }
+  function increment() {
+    // No useCallback necessary!
+    setCount((val) => val + 1);
+  }
 
-    return {
-      actions: { increment },
-      state: { count },
-    };
-  },
-);
+  return {
+    actions: { increment },
+    state: { count },
+  };
+}
+
+export const [CounterProvider, useCounterActions, useCounterState] =
+  createProvider(useCounterStore);
 ```
 
 1. `actions` - is an object with functions, to modify the state, accessible through `useCounterActions`
@@ -63,13 +62,6 @@ const [CounterProvider, useCounterActions, useCounterState] = createProvider(
 You can name your provider and hooks whatever you like. I recommend convention similar to this one.
 
 Both hooks are typed automatically through type inference, if you use TypeScript.
-
-> **Tip:** Name the function `useSomething`, as above. The provider body is a hook —
-> but `eslint-plugin-react-hooks` only recognises it as one if its name says so.
-> An anonymous `() => {...}` gets no lint coverage at all, so a hook called after
-> an [early return](#early-return) goes unreported. Naming it costs nothing and
-> turns the [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks)
-> checks back on.
 
 ### Use provider in your app
 
@@ -107,19 +99,20 @@ function Counter() {
 The hooks returned by `createProvider` are fully typed — no manual annotations needed. Types are inferred directly from what you return in the provider body:
 
 ```tsx
-const [CounterProvider, useCounterActions, useCounterState] = createProvider(
-  () => {
-    const [count, setCount] = useState(0);
-    function increment() {
-      setCount((val) => val + 1);
-    }
+function useCounterStore() {
+  const [count, setCount] = useState(0);
+  function increment() {
+    setCount((val) => val + 1);
+  }
 
-    return {
-      actions: { increment },
-      state: { count },
-    };
-  },
-);
+  return {
+    actions: { increment },
+    state: { count },
+  };
+}
+
+const [CounterProvider, useCounterActions, useCounterState] =
+  createProvider(useCounterStore);
 
 // useCounterState: (selector: (state: { count: number }) => T) => T
 // useCounterActions: () => { increment: () => void }
@@ -130,7 +123,9 @@ If you use `createProvider` with props, the provider component is typed accordin
 ```tsx
 type Props = { itemId: number }
 
-const [ItemDataProvider] = createProvider(({ itemId }: Props) => { ... });
+function useItemDataStore({ itemId }: Props) { ... }
+
+const [ItemDataProvider] = createProvider(useItemDataStore);
 
 // ItemDataProvider expects: { itemId: number, children: React.ReactNode }
 ```
@@ -154,28 +149,29 @@ If you know your state is not complete while you are waiting for some async data
 ```tsx
 import { createProvider } from "react-arven";
 
-const [CounterProvider, useCounterActions, useCounterState] = createProvider(
-  function useCounterStore() {
-    const { data, refetch } = useSomeFetchFunction(....);
+function useCounterStore() {
+  const { data, refetch } = useSomeFetchFunction(....);
 
-    if (!data) {
-      return <LoadingFallback />
-    }
-
-    return {
-      actions: { refetch },
-      state: { data },
-    };
+  if (!data) {
+    return <LoadingFallback />
   }
-);
+
+  return {
+    actions: { refetch },
+    state: { data },
+  };
+}
+
+const [CounterProvider, useCounterActions, useCounterState] =
+  createProvider(useCounterStore);
 ```
 
 If you return a React component from the `createProvider` function, the library will just render the component without providing context and rendering children.
 
 This way you can make sure your children will never receive `data` as undefined.
 
-> **Note:** Don't use hooks after early return statement — [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks) still apply! Naming the
-> function `useCounterStore` rather than leaving it anonymous is what lets
+> **Note:** Don't use hooks after early return statement — [Rules of Hooks](https://react.dev/reference/rules/rules-of-hooks) still apply! Declaring the
+> body as a standalone `useCounterStore` rather than inlining it is what lets
 > `eslint-plugin-react-hooks` catch this for you.
 
 ### Provider with props
@@ -187,16 +183,16 @@ type Props = {
   itemId: number
 }
 
-const [ItemDataProvider, ...] = createProvider(
-  function useItemDataStore({ itemId }: Props) {
-    const { data, refetch } = useSomeFetchFunction(`/api/item/${itemId}`);
+function useItemDataStore({ itemId }: Props) {
+  const { data, refetch } = useSomeFetchFunction(`/api/item/${itemId}`);
 
-    return {
-      actions: { refetch },
-      state: { data, itemId },
-    };
-  }
-);
+  return {
+    actions: { refetch },
+    state: { data, itemId },
+  };
+}
+
+const [ItemDataProvider, ...] = createProvider(useItemDataStore);
 
 // Usage:
 
@@ -238,6 +234,60 @@ return {
   state: { filtered },
 };
 ```
+
+With the [React Compiler](#react-compiler) enabled you don't have to write that
+`useMemo` at all — the compiler stabilizes derived values in the provider body
+for you.
+
+### React Compiler
+
+The [React Compiler](https://react.dev/learn/react-compiler) memoizes the
+internals of components and hooks automatically. It only does that for functions
+it can recognise as one, and its rule is syntactic: a top-level function whose
+name starts with `use` (a declaration or an arrow assigned to a `const`). A
+function expression passed straight into a call — including into
+`createProvider` — is not a compilation unit, so nothing inside it is optimized.
+
+That is why the examples above declare the provider body separately:
+
+```tsx
+// ✓ compiled — `derived` keeps its reference while `count` doesn't change
+function useCounterStore() {
+  const [count, setCount] = useState(0);
+
+  function increment() {
+    setCount((val) => val + 1);
+  }
+
+  const derived = { doubled: count * 2 };
+
+  return {
+    actions: { increment },
+    state: { count, derived },
+  };
+}
+
+const [CounterProvider, useCounterActions, useCounterState] =
+  createProvider(useCounterStore);
+```
+
+```tsx
+// ⚠ not compiled — the body is an argument, so the compiler skips it
+const [CounterProvider, useCounterActions, useCounterState] = createProvider(
+  () => {
+    ...
+  },
+);
+```
+
+The two forms behave identically at runtime; the difference is only how much
+memoization you get for free. In the compiled form, derived objects and arrays
+in the provider body are stabilized automatically, so selecting them whole
+(`useItemsState((s) => s.filtered)`) no longer re-renders on every state change
+and the `useMemo` from the previous section becomes unnecessary.
+
+Actions never needed the compiler — `createProvider` already gives them stable
+references through its [actions object](#actions-object).
 
 ### Using `shallow`
 
@@ -281,7 +331,7 @@ function Counter() {
 
 `useCounterActions` returns `null`, and the state selector is called with `null` as its state. A selector that is not written for it — `s => s.count` — therefore throws right there, in your own code, naming the field it wanted. That is deliberate: a missing provider shows up immediately at the call site instead of leaking an `undefined` deeper into the tree.
 
-> **Note:** The `null` is **not** part of the return type. Types stay narrow so that components inside their provider — the usual case — don't have to carry `?.` everywhere. The cost is that using a hook outside its provider by mistake fails at runtime rather than at compile time.
+> **Note:** The `null` is **not** part of the return type. Types stay narrow so that components inside their provider — the usual case — don't have to carry `?.` everywhere.
 
 If you want the `null` in the types somewhere, wrap the hook and annotate the return value — no cast needed:
 
