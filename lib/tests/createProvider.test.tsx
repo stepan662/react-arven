@@ -343,30 +343,83 @@ describe("createProvider", () => {
       }
     };
 
-    test("useStateContext fails", () => {
+    test("the selector runs on a null state and throws there", () => {
       const [, , useStateContext] = makeProvider();
 
       const TestComponent = () => {
-        const state = useStateContext((s) => s);
-        return <button>State: "{`${state}`}"</button>;
+        const state = useStateContext((s) => s.loading);
+        return <span>State: "{`${state}`}"</span>;
       };
 
-      expect(() => renderSilently(<TestComponent />)).toThrow(
-        /useState was called outside of its Provider/,
-      );
+      // The failure comes from the caller's own selector dereferencing null,
+      // which is what makes the missing Provider obvious at the call site.
+      expect(() => renderSilently(<TestComponent />)).toThrow(/null/);
     });
 
-    test("useActions fails", () => {
+    test("a null-safe selector passes the absence through", () => {
+      const [, , useStateContext] = makeProvider();
+      const selector = vi.fn((s?: { loading: boolean }) => s?.loading);
+
+      const TestComponent = () => {
+        const state = useStateContext(selector);
+        return <span>State: "{`${state}`}"</span>;
+      };
+
+      render(<TestComponent />);
+
+      expect(selector).toHaveBeenCalledWith(null);
+      expect(screen.getByText('State: "undefined"')).toBeTruthy();
+    });
+
+    test("useActions returns null", () => {
       const [, useActions] = makeProvider();
 
       const TestComponent = () => {
         const actions = useActions();
-        return <button>Actions: "{`${actions}`}"</button>;
+        return <span>Actions: "{`${actions}`}"</span>;
       };
 
-      expect(() => renderSilently(<TestComponent />)).toThrow(
-        /useActions was called outside of its Provider/,
+      render(<TestComponent />);
+
+      expect(screen.getByText('Actions: "null"')).toBeTruthy();
+    });
+
+    test("the same component works with and without a provider", () => {
+      const [Provider, useActions, useStateContext] = makeProvider();
+
+      const TestComponent = () => {
+        const loading = useStateContext((s) => s?.loading);
+        const actions = useActions();
+
+        if (actions === null) {
+          return <span>No provider</span>;
+        }
+
+        return (
+          <button onClick={actions.toggleLoading}>
+            Loading: {`${loading}`}
+          </button>
+        );
+      };
+
+      const { unmount } = render(<TestComponent />);
+
+      expect(screen.getByText("No provider")).toBeTruthy();
+      unmount();
+
+      render(
+        <Provider>
+          <TestComponent />
+        </Provider>,
       );
+
+      expect(screen.getByText("Loading: false")).toBeTruthy();
+
+      act(() => {
+        screen.getByRole("button").click();
+      });
+
+      expect(screen.getByText("Loading... Stop")).toBeTruthy();
     });
   });
 });

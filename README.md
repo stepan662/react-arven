@@ -14,12 +14,12 @@ Plain `useContext` re-renders every consumer on every state change, which pushes
 
 React Arven sits in the middle: it gives you a hook-friendly provider body (just write hooks as you normally would), granular re-renders via selector subscriptions, and stable action references — without any extra boilerplate.
 
-| | React Arven | plain `useContext` | Zustand | constate | use-context-selector |
-|---|---|---|---|---|---|
-| Hooks inside store | Yes | Yes | No | Yes | Yes |
-| Granular re-renders | Yes | No | Yes | Partial* | Yes |
-| Stable action refs | Yes | Manual (`useCallback`) | Yes | Manual (`useCallback`) | Manual (`useCallback`) |
-| Scoped to component tree | Yes | Yes | No | Yes | Yes |
+|                          | React Arven | plain `useContext`     | Zustand | constate               | use-context-selector   |
+| ------------------------ | ----------- | ---------------------- | ------- | ---------------------- | ---------------------- |
+| Hooks inside store       | Yes         | Yes                    | No      | Yes                    | Yes                    |
+| Granular re-renders      | Yes         | No                     | Yes     | Partial*               | Yes                    |
+| Stable action refs       | Yes         | Manual (`useCallback`) | Yes     | Manual (`useCallback`) | Manual (`useCallback`) |
+| Scoped to component tree | Yes         | Yes                    | No      | Yes                    | Yes                    |
 
 \* constate achieves granular re-renders by splitting your hook into multiple separate contexts — one per value. This works well but requires you to restructure your code around it. React Arven uses selectors on a single context instead.
 
@@ -44,15 +44,16 @@ const [CounterProvider, useCounterActions, useCounterState] = createProvider(
   function useCounterStore() {
     const [count, setCount] = useState(0);
 
-    function increment() {          // No useCallback necessary!
-      setCount(val => val + 1)
+    function increment() {
+      // No useCallback necessary!
+      setCount((val) => val + 1);
     }
 
     return {
       actions: { increment },
       state: { count },
     };
-  }
+  },
 );
 ```
 
@@ -80,7 +81,7 @@ function CounterApp() {
     <CounterProvider>
       <Counter />
     </CounterProvider>
-  )
+  );
 }
 ```
 
@@ -90,14 +91,14 @@ Now you can use hooks returned from the `createProvider` to use state and action
 
 ```tsx
 function Counter() {
-  const count = useCounterState(s => s.count)   // selecting only what is needed
-  const { increment } = useCounterActions()
+  const count = useCounterState((s) => s.count); // selecting only what is needed
+  const { increment } = useCounterActions();
   return (
     <div>
       <div>Count: {count}</div>
       <button onClick={increment}>Increment</button>
     </div>
-  )
+  );
 }
 ```
 
@@ -106,15 +107,19 @@ function Counter() {
 The hooks returned by `createProvider` are fully typed — no manual annotations needed. Types are inferred directly from what you return in the provider body:
 
 ```tsx
-const [CounterProvider, useCounterActions, useCounterState] = createProvider(() => {
-  const [count, setCount] = useState(0);
-  function increment() { setCount(val => val + 1) }
+const [CounterProvider, useCounterActions, useCounterState] = createProvider(
+  () => {
+    const [count, setCount] = useState(0);
+    function increment() {
+      setCount((val) => val + 1);
+    }
 
-  return {
-    actions: { increment },
-    state: { count },
-  };
-});
+    return {
+      actions: { increment },
+      state: { count },
+    };
+  },
+);
 
 // useCounterState: (selector: (state: { count: number }) => T) => T
 // useCounterActions: () => { increment: () => void }
@@ -211,22 +216,22 @@ function MyApp() {
 The provider body re-runs on every state change. This means that a derived object or array computed inline gets a new reference each time — which is normal React behaviour. As long as you select primitive values from state in your components, this is completely fine, since primitives are compared by value:
 
 ```tsx
-const count = useCounterState(s => s.count)           // ✓ safe
-const filteredCount = useCounterState(s => s.filtered.length)  // ✓ safe
+const count = useCounterState((s) => s.count); // ✓ safe
+const filteredCount = useCounterState((s) => s.filtered.length); // ✓ safe
 ```
 
 The problem arises when you select the whole derived object or array. Because re-render decisions are based on `Object.is`, the component will re-render on every state change even if the data hasn't changed:
 
 ```tsx
-const filtered = useItemsState(s => s.filtered)  // ⚠ new reference every render
+const filtered = useItemsState((s) => s.filtered); // ⚠ new reference every render
 ```
 
 In that case, stabilize the reference in the provider with `useMemo`:
 
 ```tsx
 const filtered = useMemo(
-  () => items.filter(x => x > threshold),
-  [items, threshold]
+  () => items.filter((x) => x > threshold),
+  [items, threshold],
 );
 
 return {
@@ -255,3 +260,39 @@ function Counter() {
 ```
 
 This way you'll make sure your component doesn't re-render every time. This functionality is inspired by the Zustand library.
+
+
+## Components without a provider
+
+Called outside of their provider, the context is `null` — the same way a plain React context falls back to its default value. This makes it possible to write a component that renders with or without the provider above it, as long as its selector can cope with the absence:
+
+```tsx
+function Counter() {
+  const count = useCounterState((s) => s?.count); // note the `?.`
+  const actions = useCounterActions();
+
+  if (actions === null) {
+    return <div>No counter here</div>;
+  }
+
+  return <button onClick={actions.increment}>Count: {count}</button>;
+}
+```
+
+`useCounterActions` returns `null`, and the state selector is called with `null` as its state. A selector that is not written for it — `s => s.count` — therefore throws right there, in your own code, naming the field it wanted. That is deliberate: a missing provider shows up immediately at the call site instead of leaking an `undefined` deeper into the tree.
+
+> **Note:** The `null` is **not** part of the return type. Types stay narrow so that components inside their provider — the usual case — don't have to carry `?.` everywhere. The cost is that using a hook outside its provider by mistake fails at runtime rather than at compile time.
+
+If you want the `null` in the types somewhere, wrap the hook and annotate the return value — no cast needed:
+
+```tsx
+type CounterActions = ReturnType<typeof useCounterActions>;
+
+function useOptionalCounterActions(): CounterActions | null {
+  return useCounterActions();
+}
+
+function useOptionalCount(): number | undefined {
+  return useCounterState((s) => s?.count);
+}
+```
