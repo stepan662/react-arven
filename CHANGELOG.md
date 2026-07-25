@@ -1,3 +1,12 @@
+## [1.4.1](https://github.com/stepan662/react-arven/compare/v1.4.0...v1.4.1) (2026-07-25)
+
+
+### Bug Fixes
+
+* context now required, shorter err messages ([2be049b](https://github.com/stepan662/react-arven/commit/2be049bac8ce2bbe807cf5c7e176c7bd41c52a13))
+* gracefully handle missing actions ([636201c](https://github.com/stepan662/react-arven/commit/636201c484ed8e99c6b886ccf129845ffd24a952))
+* incorrect react versions, react19 compatibility ([b97af42](https://github.com/stepan662/react-arven/commit/b97af424025533c6c00ddd3bc6da89cb344b7a12))
+
 # [1.4.0](https://github.com/stepan662/react-arven/compare/v1.3.2...v1.4.0) (2026-07-24)
 
 
