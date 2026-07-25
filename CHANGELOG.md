@@ -1,3 +1,15 @@
+# [2.0.0](https://github.com/stepan662/react-arven/compare/v1.4.1...v2.0.0) (2026-07-25)
+
+
+### Features
+
+* drop react 16/17 support ([f75bd77](https://github.com/stepan662/react-arven/commit/f75bd771f9aea48c34b1067f4dfd4ead5a152328))
+
+
+### BREAKING CHANGES
+
+* React 16 and 17 is no longer supported
+
 ## [1.4.1](https://github.com/stepan662/react-arven/compare/v1.4.0...v1.4.1) (2026-07-25)
 
 
