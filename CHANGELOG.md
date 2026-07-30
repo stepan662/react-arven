@@ -1,3 +1,10 @@
+## [2.2.1](https://github.com/stepan662/react-arven/compare/v2.2.0...v2.2.1) (2026-07-30)
+
+
+### Bug Fixes
+
+* context value memoized ([#16](https://github.com/stepan662/react-arven/issues/16)) ([9a61813](https://github.com/stepan662/react-arven/commit/9a61813c90e7626918f3f0d8b09e015bd4a8f93c))
+
 # [2.2.0](https://github.com/stepan662/react-arven/compare/v2.1.0...v2.2.0) (2026-07-25)
 
 
