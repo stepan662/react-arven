@@ -59,14 +59,17 @@ jobs:
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
-          # A `workflow_run` job always runs on the default branch, so GITHUB_REF
-          # says `main` no matter which branch triggered the Test run.
-          # semantic-release reads it (through env-ci) to decide which branch it
-          # is releasing, so point it at the branch actually checked out —
-          # otherwise an `rc` run tries to release `main` and dies in
-          # `git tag --merged main`, a ref it never fetched locally.
-          GITHUB_REF: refs/heads/${{ env.RELEASE_BRANCH }}
-        run: npx semantic-release
+        # A `workflow_run` job always runs on the default branch, so GITHUB_REF
+        # says `main` no matter which branch triggered the Test run.
+        # semantic-release reads it (through env-ci) to decide which branch it is
+        # releasing, so it has to be pointed at the branch actually checked out —
+        # otherwise an `rc` run releases as `main` and dies in `git tag --merged
+        # main`, a ref it never fetched locally.
+        #
+        # Assigned on the command line rather than under `env:` above: the runner
+        # supplies its own `GITHUB_*` defaults and an `env:` entry doesn't displace
+        # them, whereas a shell assignment applies at exec time and does.
+        run: GITHUB_REF="refs/heads/$RELEASE_BRANCH" npx semantic-release
 
       - name: Get version after release
         id: post_release
@@ -74,6 +77,34 @@ jobs:
           VERSION=$(node -p "require('./lib/package.json').version")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "dist_tag=$(node ./scripts/npm-dist-tag.mjs "$VERSION")" >> $GITHUB_OUTPUT
+
+      # semantic-release picks its release config by the branch env-ci reports, so a
+      # run that misidentifies its branch releases on the wrong channel — an `rc`
+      # run believing it is `main` would put prerelease content on `latest`. The
+      # dist-tag is derived from the version, so holding it against the branch
+      # catches that before anything reaches npm.
+      - name: Check the dist-tag matches the branch
+        if: steps.pre_release.outputs.version != steps.post_release.outputs.version
+        env:
+          VERSION: ${{ steps.post_release.outputs.version }}
+          DIST_TAG: ${{ steps.post_release.outputs.dist_tag }}
+        run: |
+          set -euo pipefail
+
+          # Prerelease branches publish under their own name (`rc` -> `rc`), which
+          # is also the preid release.config.js gives them.
+          if [ "$RELEASE_BRANCH" = 'main' ]; then
+            EXPECTED=latest
+          else
+            EXPECTED="$RELEASE_BRANCH"
+          fi
+
+          if [ "$DIST_TAG" != "$EXPECTED" ]; then
+            echo "::error::Refusing to publish $VERSION from $RELEASE_BRANCH — that lands on the '$DIST_TAG' npm tag, expected '$EXPECTED'."
+            exit 1
+          fi
+
+          echo "\`$VERSION\` from \`$RELEASE_BRANCH\` publishes to the \`$DIST_TAG\` npm tag, as expected." >> $GITHUB_STEP_SUMMARY
 
       - name: Copy docs to package
         if: steps.pre_release.outputs.version != steps.post_release.outputs.version
