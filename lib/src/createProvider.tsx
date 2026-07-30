@@ -86,11 +86,19 @@ export function createProvider<
 
     const actions = useStableActions(_actions);
 
+    // Memoised so that the store's identity check has something to compare.
+    // A fresh object literal here would make that check always fail, and every
+    // Provider render — including one caused only by a prop the state does not
+    // depend on — would re-run every consumer's selector. `actions` is already
+    // stable, so this collapses to "did `state` change identity", which is
+    // exactly what the React Compiler stabilises in a compiled provider body.
+    // Declared above the early return below: it is a hook, so it has to run on
+    // every render, fallback or not.
+    const value = React.useMemo(() => ({ state, actions }), [state, actions]);
+
     if (React.isValidElement(result) || result === null) {
       return result;
     }
-
-    const value = { state, actions };
 
     return <Context.Provider value={value}>{children}</Context.Provider>;
   };
