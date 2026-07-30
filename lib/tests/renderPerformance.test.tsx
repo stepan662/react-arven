@@ -213,4 +213,88 @@ describe("render performance", () => {
     expect(counterOneRenders).toBe(2);
     expect(counterTwoRenders).toBe(1);
   });
+
+  test("a provider render that leaves state identity intact does not fan out", () => {
+    let selectorRuns = 0;
+
+    // Stands in for a compiled provider body: `state` keeps its reference
+    // while `count` is unchanged, so a render caused only by `label` must not
+    // reach the consumers at all.
+    const [Provider, , useStateContext] = createProvider(
+      ({ label }: { label: string }) => {
+        const [count, setCount] = React.useState(0);
+        const state = React.useMemo(() => ({ count }), [count]);
+        void label;
+        return { state, actions: { setCount } };
+      },
+    );
+
+    const Consumer = () => {
+      useStateContext((s) => {
+        selectorRuns++;
+        return s.count;
+      });
+      return null;
+    };
+
+    const App = () => {
+      const [label, setLabel] = React.useState("a");
+      // Held stable so the only route to the consumer is the store fan-out,
+      // not an ordinary parent re-render handing it a new element.
+      const children = React.useMemo(() => <Consumer />, []);
+      return (
+        <>
+          <button onClick={() => setLabel((l) => l + "!")}>relabel</button>
+          <Provider label={label}>{children}</Provider>
+        </>
+      );
+    };
+
+    render(<App />);
+    selectorRuns = 0;
+
+    act(() => {
+      screen.getByText("relabel").click();
+    });
+
+    expect(selectorRuns).toBe(0);
+  });
+
+  test("a state change still reaches consumers", () => {
+    let selectorRuns = 0;
+
+    const [Provider, useActions, useStateContext] = createProvider(() => {
+      const [count, setCount] = React.useState(0);
+      const state = React.useMemo(() => ({ count }), [count]);
+      return { state, actions: { increment: () => setCount((c) => c + 1) } };
+    });
+
+    const Consumer = () => {
+      const count = useStateContext((s) => {
+        selectorRuns++;
+        return s.count;
+      });
+      return <div>Count: {count}</div>;
+    };
+
+    const Control = () => {
+      const { increment } = useActions();
+      return <button onClick={increment}>increment</button>;
+    };
+
+    render(
+      <Provider>
+        <Consumer />
+        <Control />
+      </Provider>,
+    );
+    selectorRuns = 0;
+
+    act(() => {
+      screen.getByText("increment").click();
+    });
+
+    expect(selectorRuns).toBeGreaterThan(0);
+    expect(screen.getByText("Count: 1")).toBeTruthy();
+  });
 });
