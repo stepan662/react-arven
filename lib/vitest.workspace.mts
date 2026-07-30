@@ -12,7 +12,7 @@ const project = (name: string, appDir: string) => {
   const modules = resolve(__dir, `../${appDir}/node_modules`);
 
   return {
-    extends: "./vitest.config.ts",
+    extends: "./vitest.config.mts",
     test: { name },
     resolve: {
       // Order matters: the more specific react-dom entry points must precede
