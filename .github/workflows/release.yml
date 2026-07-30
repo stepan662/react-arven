@@ -59,6 +59,13 @@ jobs:
       - name: Semantic Release
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          # A `workflow_run` job always runs on the default branch, so GITHUB_REF
+          # says `main` no matter which branch triggered the Test run.
+          # semantic-release reads it (through env-ci) to decide which branch it
+          # is releasing, so point it at the branch actually checked out —
+          # otherwise an `rc` run tries to release `main` and dies in
+          # `git tag --merged main`, a ref it never fetched locally.
+          GITHUB_REF: refs/heads/${{ env.RELEASE_BRANCH }}
         run: npx semantic-release
 
       - name: Get version after release
