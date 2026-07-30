@@ -32,7 +32,16 @@ at `main` and cuts the stable version the same commits imply — the `2.2.0-rc.3
 `rc` becomes `2.2.0` on `main`.
 
 `main` then gets a `chore(release)` commit with the CHANGELOG entry and the bumped
-`lib/package.json`, so merge `main` back into `rc` before continuing to work there.
+`lib/package.json`, and [`Release`](.github/workflows/release.yml) catches `rc` up
+with it — usually a fast-forward, a merge commit if `rc` moved on in the meantime.
+
+That step isn't housekeeping. semantic-release finds the last release with
+`git tag --merged rc`, and the stable tag sits on the `chore(release)` commit — a
+child of the merge commit, so it never becomes reachable from `rc`. A `rc` left
+behind keeps numbering from the previous stable version and publishes an
+`x.y.z-rc.N` that `latest` already superseded, without failing. If the merge
+conflicts the workflow says so and stops; `rc` then wants merging by hand before
+the next prerelease.
 
 ## Not merging into `main` by accident
 
