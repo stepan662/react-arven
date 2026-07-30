@@ -88,3 +88,46 @@ jobs:
         if: steps.pre_release.outputs.version != steps.post_release.outputs.version
         run: |
           echo "Published \`react-arven@${{ steps.post_release.outputs.version }}\` under the \`${{ steps.post_release.outputs.dist_tag }}\` npm tag." >> $GITHUB_STEP_SUMMARY
+
+      # semantic-release resolves the last release with `git tag --merged <branch>`,
+      # and a stable tag sits on the `chore(release)` commit — a child of the merge
+      # commit, so never reachable from `rc`. Left behind, `rc` keeps numbering its
+      # prereleases from the previous stable version and publishes an `x.y.z-rc.N`
+      # that `latest` has already superseded. Nothing errors; the rc channel just
+      # goes quietly wrong. So `rc` gets caught up as part of the release.
+      - name: Sync rc with main
+        if: env.RELEASE_BRANCH == 'main'
+        run: |
+          set -euo pipefail
+
+          MAIN=$(git rev-parse HEAD)
+          git fetch origin +refs/heads/rc:refs/remotes/origin/rc
+
+          if git merge-base --is-ancestor origin/rc "$MAIN"; then
+            git push origin "$MAIN":refs/heads/rc
+            echo "Fast-forwarded \`rc\` to \`main\`." >> $GITHUB_STEP_SUMMARY
+            exit 0
+          fi
+
+          # `rc` picked up commits while `main` was releasing, so catching it up
+          # takes a real merge. `[skip ci]` keeps this from publishing a prerelease
+          # off an automated merge — the next merge into `rc` does that, now
+          # numbered from the stable version that just shipped.
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B rc origin/rc
+
+          if ! git merge --no-edit -m 'chore: merge main into rc [skip ci]' "$MAIN"; then
+            git merge --abort
+            {
+              echo "### Couldn't sync \`rc\` with \`main\`"
+              echo
+              echo "The release published, but merging \`main\` into \`rc\` conflicts."
+              echo "Merge it by hand — until then \`rc\` numbers its prereleases from the"
+              echo "stable version before this one and publishes versions \`latest\` already has."
+            } >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+          git push origin rc
+          echo "Merged \`main\` into \`rc\`." >> $GITHUB_STEP_SUMMARY
