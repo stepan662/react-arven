@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout merge commit
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -34,10 +34,10 @@ jobs:
           BASE_REF: ${{ github.event.pull_request.base.ref }}
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: 'pnpm'
@@ -57,7 +57,7 @@ jobs:
         # Pull requests from forks get a read-only token, so the comment (and
         # the dry run itself) is skipped there — the job summary still shows it.
         if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs')
