@@ -21,6 +21,8 @@ It lets you use React Context the way you would hope it worked by default, witho
 
 \* constate achieves granular re-renders by splitting your hook into multiple separate contexts — one per value. This works well but requires you to restructure your code around it. React Arven uses selectors on a single context instead.
 
+> Full motivation behind this library on my [blog](https://granat.blog/posts/2026-07-24-react-arven/)
+
 ## Installation
 
 Install react-arven with npm, yarn or pnpm:
